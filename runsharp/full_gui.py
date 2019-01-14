@@ -146,7 +146,7 @@ class Calendar(QCalendarWidget):
         qdate_avail = QDate(dt_avail.year, dt_avail.month, dt_avail.day)
         self.setMaximumDate(qdate_avail)
         self.setSelectedDate(qdate_avail)
-
+    
     def setEarliestAvailable(self, dt_earliest):
         qdate_earliest = QDate(dt_earliest.year, dt_earliest.month, dt_earliest.day)
         self.setMinimumDate(qdate_earliest)
@@ -434,12 +434,19 @@ class Picker(QWidget):
             times = times[0]
 
             if updated_model:
-                dt_avail = max(times)
-                dt_earliest = min(times)
-                if self.model == 'observed':
+                if self.model.lower() == 'ruc':
+                    dt_avail = date.datetime(2012, 5, 1)
+                else:
+                    dt_avail = max(times)
+
+                if self.model.lower() == 'observed':
                     dt_earliest = date.datetime(1946, 1, 1)
-                elif self.model.lower() in ['gfs', 'nam', 'rap', 'nam4km', 'ruc']:
+                elif self.model.lower() in ['gfs', 'nam', 'nam4km', 'ruc']:
                     dt_earliest = date.datetime(2010, 12, 30)
+                elif self.model.lower() == 'rap':
+                    dt_earliest = date.datetime(2012, 5, 1)
+                else:
+                    dt_earliest = min(times)
 
                 self.cal.setLatestAvailable(dt_avail)
                 self.cal.setEarliestAvailable(dt_earliest)
