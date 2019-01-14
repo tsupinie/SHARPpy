@@ -315,7 +315,7 @@ def _availableat_iem(model, dt):
         dt : datetime object
             A datetime object that represents the model initalization time.
     '''
-    if model == '4km nam': model = 'nam4km'
+    if model == '4km nam' or model == 'nam nest': model = 'nam4km'
     _repl = {'gfs':'gfs3', 'nam':'namm?', 'rap':'rap', 'nam4km':'nam4kmm?', 'hrrr':'hrrr', 'sref':'sref', 'ruc':'ruc'}
 
     cycle = dt.hour
@@ -352,19 +352,35 @@ def _available_iem(model, dt=None):
         except:
             dt = datetime(dt.year(), dt.month(), dt.day())
     
-    if model == '4km nam': model = 'nam4km'
+    if model == '4km nam' or model == 'nam nest': model = 'nam4km'
 
+    # Filtering out datetimes where we know there is no data on the IEM server.
+    # Either due to no data, depreciated modeling systems, etc.
     if dt < datetime(2010,12,30): # No Bufkit files before this date
         return []
     if dt > datetime.utcnow() - timedelta(seconds=3600*24):
         return []
+    if model == 'ruc' and dt > datetime(2012,5,1,11,0,0): # RIP RUC
+        return []
+    if model == 'nam4km' and dt < datetime(2013,3,25,0,0,0): # No NAM 4 km data before this time
+        return []
+    if model == 'rap' and dt < datetime(2012,5,1): # No RAP data prior to this date
+        return []
 
     if model == 'ruc' or model == 'rap':
-       return [datetime(dt.year, dt.month, dt.day, h, 0, 0) for h in np.arange(0,24,1)]
-    if model == 'gfs' or model == 'nam' or model == 'nam4km':
-       return [datetime(dt.year, dt.month, dt.day, h, 0, 0) for h in np.arange(0,24,6)]
+        if dt.year == 2012 and dt.month == 5 and dt.day == 1: # Need to truncate the times since there was a switchover from RUC to RAP on this day.
+            if model == 'ruc':
+                start = 0; end = 12;
+            elif model == 'rap':
+                start = 12; end = 24;
+        else:
+            start = 0; end = 24;
+        inc = 1
 
-    return []
+    if model == 'gfs' or model == 'nam' or model == 'nam4km':
+        start = 0; end = 24; inc = 6
+
+    return [datetime(dt.year, dt.month, dt.day, h, 0, 0) for h in np.arange(start,end,inc)]
 
 
 ## PECAN MAPS ENSEMBLE CODE
@@ -413,8 +429,8 @@ available = {
     'psu':{}, 
     'iem':{}, 
     'spc':{'observed': lambda dt=None: _available_spc(dt=dt)},
-    'ou_pecan': {'pecan ensemble': lambda dt=None: _available_oupecan(dt=dt) },
-    'ncar_ens': {'ncar ensemble': lambda dt=None: _available_ncarens(dt=dt) },
+#    'ou_pecan': {'pecan ensemble': lambda dt=None: _available_oupecan(dt=dt) },
+#    'ncar_ens': {'ncar ensemble': lambda dt=None: _available_ncarens(dt=dt) },
     'sharp': {'ncar ensemble': lambda dt=None: _available_ncarens(dt=dt), 'observed': lambda dt=None: _available_sharp(dt=dt), 'goes': lambda dt=None: _available_goes(dt=dt) },
     'local': {'local wrf-arw': lambda filename:  _available_local(filename)},
 }
@@ -435,7 +451,7 @@ for model in [ 'gfs', 'nam', 'rap', 'hrrr', '4km nam', 'sref' ]:
     availableat['psu'][model] = (lambda m: lambda dt: _availableat_psu(m, dt))(model)
 
 # Set the available and available-at-time functions for the IEM data.
-for model in [ 'gfs', 'nam', 'rap', 'ruc', '4km nam' ]:
+for model in [ 'gfs', 'nam', 'rap', 'ruc', 'nam nest' ]:
     available['iem'][model] = (lambda m: lambda dt=None: _available_iem(m, dt=dt))(model)
     availableat['iem'][model] = (lambda m: lambda dt: _availableat_iem(m, dt))(model)
 

@@ -52,10 +52,9 @@ class backgroundSkewT(QtGui.QWidget):
         else:
             fsize = 7
             fsizet = 14
-
-        self.title_font = QtGui.QFont('Helvetica', fsizet + (self.hgt * 0.005))
+        self.title_font = QtGui.QFont('Helvetica', fsizet + (self.hgt * 0.003))
         self.title_metrics = QtGui.QFontMetrics( self.title_font )
-        self.title_font.setBold(True)
+        #self.title_font.setBold(True)
         self.title_height = self.title_metrics.xHeight() + 5 + (self.hgt * 0.003)
 
         self.label_font = QtGui.QFont('Helvetica', fsize + 2 + (self.hgt * 0.0045))
@@ -712,7 +711,7 @@ class plotSkewT(backgroundSkewT):
             
             # Example: 4 {'tmpc': 10.790866472309446} (changed the 4th point of the tmpc profile to the temperature value set in tmpc)
             # So, if we want to modify an entire layer of the sounding, we'll have to get creative.
-            print(drag_idx, {prof_name: tmpc})
+            #print(drag_idx, {prof_name: tmpc})
             self.modified.emit(drag_idx, {prof_name:tmpc})
 
         self.was_right_click = False

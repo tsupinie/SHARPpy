@@ -11,29 +11,29 @@ matrix:
   - os: linux
     language: generic
     env: 
-      - PYTHON_VERSION="3.6" BUILD_CONDA="YES" PYTEST_ARGS="-v --cov" NUMPY_VERSION=1.15.*
+      - PYTHON_VERSION="3.6" BUILD_CONDA="YES" NUMPY_VERSION=1.15.*
   - os: osx
     language: generic
     env: 
-      - PYTHON_VERSION="3.6" DISPLAY_AVAIL="NO" BUILD_BINARY="YES" PYTEST_ARGS="-v --cov" NUMPY_VERSION=1.15.*
+      - PYTHON_VERSION="3.6" DISPLAY_AVAIL="NO" BUILD_BINARY="YES" NUMPY_VERSION=1.15.*
   - os: linux
     language: generic
     env:
-      - PYTHON_VERSION="2.7" COVERALLS="YES" DISPLAY_AVAIL="YES" PYTEST_ARGS="-v --cov" NUMPY_VERSION=1.15.*
+      - PYTHON_VERSION="2.7" NUMPY_VERSION=1.15.*
   - os: linux
     language: generic
     env:
-      - PYTHON_VERSION="3.6" BUILD_DOCS="YES" DISPLAY_AVAIL="YES" PYTEST_ARGS="-v --cov" NUMPY_VERSION=1.15.*
+      - PYTHON_VERSION="3.6" BUILD_DOCS="YES" NUMPY_VERSION=1.15.* COVERALLS="YES"
 before_install:
 - source ci/install.sh
 install:
 - pip install -e .
 script:
-- if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then xvfb-run py.test -v --cov=sharppy sharppy/ ; else py.test -v --cov=sharppy sharppy/; fi
+- if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then xvfb-run pytest -v --cov ; else pytest -v --cov ; fi
 # If the test script passes, deploy if it's tagged..generate the binaries.
 after_success:
 # Deploy test information to coveralls
-- if [[ "$COVERALLS" == "YES" ]] ; then coveralls || echo "Coveralls failed" ;fi
+- if [[ "$COVERALLS" == "YES" ]] ; then coveralls || echo "Coveralls upload failed" ;fi
 # Build the binary if it's a new tag.
 - if [[ -n "$TRAVIS_TAG" ]]; then source ci/make_binary.sh; fi
 before_deploy:

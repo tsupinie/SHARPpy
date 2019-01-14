@@ -3,9 +3,11 @@ environment:
     - PYTHON_VERSION: 2.7
       MINICONDA: C:\Miniconda
       ARCH: "64"
+      NUMPY_VERSION: "1.15.*"
     - PYTHON_VERSION: 3.6
       MINICONDA: C:\Miniconda3
       ARCH: "64"
+      NUMPY_VERSION: "1.15.*"
 init:
   - "ECHO %PYTHON_VERSION% %MINICONDA%"
 
@@ -14,32 +16,44 @@ install:
   - conda config --set always_yes yes --set changeps1 no
   - conda update -q conda
   - conda info -a
-  - "conda create -q -n test-environment python=%PYTHON_VERSION% numpy nose"
+  - "conda create -q -n test-environment python=%PYTHON_VERSION%"
 
   # Install dependencies
   - activate test-environment
-  - conda install -c conda-forge pyside
-  - conda install -c conda-forge pyinstaller
+  - "conda install -q -c conda-forge pyside pyinstaller pytest requests python-dateutil numpy=%NUMPY_VERSION%"
  
   # Add to path the current folder
-  - "SET PYTHONPATH=%PYTHONPATH%;%CD%"
+  #- "SET PYTHONPATH=%PYTHONPATH%;%CD%"
 
   # Install SHARPpy
-  - "python setup.py install"
-  
-  # Make binaries using PyInstaller
-  - "pyinstaller runsharp/SHARPpy-win7-%ARCH%.spec"
-  - "move dist\\SHARPpy.exe dist\\SHARPpy%ARCH%.exe"
+  - "pip install -e ."
+
+  # Resize the screen 
+  #- nuget restore
+  - ps: iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/set-screenresolution.ps1'))  
+  - ps: Set-ScreenResolution 1366 768
 
 build: off
 
 # Turning off Test Script for now  
-#test_script:
-#  - "python sharppy/tests/test_url.py https://www.spc.noaa.gov/exper/soundings/18112100_OBS/OUN.txt"
+test_script:
+  - sharppy examples/data/14061619.OAX
+  - pytest -v
+
+before_deploy:
+  # Make binaries using PyInstaller
+  - "pyinstaller runsharp/SHARPpy-win7-%ARCH%.spec"
+  - "move dist\\SHARPpy.exe dist\\SHARPpy%ARCH%.exe"
 
 artifacts:
-  path: "dist\\SHARPpy64.exe"
-  name: "SHARPpy64"
+  - path: "dist\\SHARPpy64.exe"
+    name: "SHARPpy64"
+  
+  - path: "*.png"
+    name: test images
+
+  - path: "examples\\data\\14061619.png"
+    name: test gui
 
 deploy:
   provider: GitHub
